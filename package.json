@@ -1,2 +1,2 @@
-{ "name" : "nativescript-speak",
-  "main" : "speak.js" }
+{ "name" : "nativescript-speaker",
+  "main" : "speaker.js" }
