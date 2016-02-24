@@ -1,2 +1,3 @@
 { "name" : "nativescript-speaker",
-  "main" : "speaker.js" }
+  "main" : "speaker.js",
+  "version": "0.0.1" }
