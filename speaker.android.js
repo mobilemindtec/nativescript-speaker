@@ -24,82 +24,84 @@ exports.start = function(typeName, id, label){
     intent.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, label);
    
     if (intent.resolveActivity(application.android.context.getPackageManager()) != null) {
-      
-      var previousResult = application.android.onActivityResult;
-      application.android.onActivityResult = function (requestCode, resultCode, data) {
-     
-       application.android.onActivityResult = previousResult;
-     
-         if ( requestCode === RC_SPECK && resultCode === android.app.Activity.RESULT_OK) {
-            var matches = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+        
+      application.android.on("activityResult", function(eventData) {
 
-            if(matches && matches.size() > 0){
+        var data = eventData.intent
 
-              if(typeName === 'string'){
-                mOnSuccessCallback(id, matches.get(0))
-              }else if(typeName === 'double'){
+        if ( eventData.requestCode === RC_SPECK && eventData.resultCode === android.app.Activity.RESULT_OK) {
+          var matches = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
 
-                console.log("####################################################")
-                console.log(matches)
-                console.log("####################################################")
+          if(matches && matches.size() > 0){
 
-                try{
+            if(typeName === 'string'){
+              mOnSuccessCallback(id, matches.get(0))
+            }else if(typeName === 'double'){
 
-                  var replaces = [
-                    'com', ',', 'ponto', 'e', 'i', 'virgula', '-'
-                  ]
+              console.log("####################################################")
+              console.log(matches)
+              console.log("####################################################")
 
-                  for(var i = 0; i < matches.size(); i++){
-                    var words  = matches.get(i)
-                    var wordsClear  = ""
+              try{
 
-                    for(var j = 0; j < words.length; j++)
-                      if(words[j] != ' ')
-                        wordsClear += words[j]
+                var replaces = [
+                  'com', ',', 'ponto', 'e', 'i', 'virgula', '-'
+                ]
 
-                    for(var j = 0; j < replaces.length; j++)
-                      wordsClear = wordsClear.replace(replaces[j], '.')
-                    
-                    var v = parseFloat(wordsClear)
+                for(var i = 0; i < matches.size(); i++){
+                  var words  = matches.get(i)
+                  var wordsClear  = ""
+
+                  for(var j = 0; j < words.length; j++)
+                    if(words[j] != ' ')
+                      wordsClear += words[j]
+
+                  for(var j = 0; j < replaces.length; j++)
+                    wordsClear = wordsClear.replace(replaces[j], '.')
                   
-                    if(v && !isNaN(v)){
-                      mOnSuccessCallback(id, v)
-                      return
-                    }
-                    
-                  }
-
-                  mOnParseFailCallback(id, matches)
-
-                }catch(e){
-                  mOnParseFailCallback(id, matches)
-                }
-              }else if(typeName === 'int'){
-                try{
-                  
-                  var v = parseInt(matches.get(0))
-                  
-                  if(!v || isNaN(v))
-                    mOnParseFailCallback(id, matches)
-                  else
+                  var v = parseFloat(wordsClear)
+                
+                  if(v && !isNaN(v)){
                     mOnSuccessCallback(id, v)
-
-                }catch(e){
-                  mOnParseFailCallback(id, matches)
+                    return
+                  }
+                  
                 }
-              }
 
-            }else{
-              mOnParseFailCallback(id, matches)
+                mOnParseFailCallback(id, matches)
+
+              }catch(e){
+                mOnParseFailCallback(id, matches)
+              }
+            }else if(typeName === 'int'){
+              try{
+                
+                var v = parseInt(matches.get(0))
+                
+                if(!v || isNaN(v))
+                  mOnParseFailCallback(id, matches)
+                else
+                  mOnSuccessCallback(id, v)
+
+              }catch(e){
+                mOnParseFailCallback(id, matches)
+              }
             }
 
-         }else{
+          }else{
+            mOnParseFailCallback(id, matches)
+          }
+
+        }else{
+          
           if(mOnCancelCallback)
-              mOnCancelCallback(id)
-         }
-      }
+            mOnCancelCallback(id)
+        }
+
+      })
+          
      
-       application.android.currentContext.startActivityForResult(intent, RC_SPECK);
+      application.android.currentContext.startActivityForResult(intent, RC_SPECK);
 
     }else{
         //as not app speak api
